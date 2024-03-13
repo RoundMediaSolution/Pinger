@@ -1,89 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Network Monitoring</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    canvas {
-      display: block;
-      margin: auto;
-      border: 1px solid black;
-    }
-  </style>
+    <title>Continuous Network Testing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #testContainer {
+            text-align: center;
+            max-width: 800px;
+        }
+
+        #testChart {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="networkChart" width="800" height="400"></canvas>
+    <div id="testContainer">
+        <h1>Continuous Network Testing</h1>
+        <div>
+            <label for="websiteInput">Enter Website URL:</label>
+            <input type="text" id="websiteInput" placeholder="https://example.com">
+            <button onclick="startTesting()">Start Testing</button>
+            <canvas id="testChart"></canvas>
+        </div>
+    </div>
 
-  <script>
-    const canvas = document.getElementById('networkChart');
-    const ctx = canvas.getContext('2d');
+    <script>
+        const testChart = document.getElementById('testChart').getContext('2d');
 
-    // Initialize variables for network metrics
-    let latencyData = [];
-    let packetLossData = [];
-    let jitterData = [];
+        let testData = {
+            labels: [],
+            latency: [],
+            packetLoss: [],
+            jitter: []
+        };
 
-    // Function to generate random data for demonstration
-    function generateRandomData() {
-      return Math.random() * 100; // Replace with actual network test results
-    }
+        let chartOptions = {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        };
 
-    // Function to update chart with new data
-    function updateChart() {
-      // Add new data to arrays
-      latencyData.push(generateRandomData());
-      packetLossData.push(generateRandomData());
-      jitterData.push(generateRandomData());
+        let myChart = new Chart(testChart, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Latency (ms)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    data: []
+                }, {
+                    label: 'Packet Loss (%)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    data: []
+                }, {
+                    label: 'Jitter',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    data: []
+                }]
+            },
+            options: chartOptions
+        });
 
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function startTesting() {
+            let websiteURL = document.getElementById('websiteInput').value;
+            console.log('Testing website:', websiteURL);
 
-      // Plot latency
-      ctx.strokeStyle = 'blue';
-      ctx.beginPath();
-      ctx.moveTo(0, latencyData[0]);
-      for (let i = 1; i < latencyData.length; i++) {
-        ctx.lineTo(i * 10, latencyData[i]);
-      }
-      ctx.stroke();
+            // TODO: Perform network testing and update chart
+        }
 
-      // Plot packet loss
-      ctx.strokeStyle = 'red';
-      ctx.beginPath();
-      ctx.moveTo(0, packetLossData[0]);
-      for (let i = 1; i < packetLossData.length; i++) {
-        ctx.lineTo(i * 10, packetLossData[i]);
-      }
-      ctx.stroke();
+        function updateChartData(latency, packetLoss, jitter) {
+            let timeNow = new Date().toLocaleTimeString();
+            testData.labels.push(timeNow);
+            testData.latency.push(latency);
+            testData.packetLoss.push(packetLoss);
+            testData.jitter.push(jitter);
 
-      // Plot jitter
-      ctx.strokeStyle = 'green';
-      ctx.beginPath();
-      ctx.moveTo(0, jitterData[0]);
-      for (let i = 1; i < jitterData.length; i++) {
-        ctx.lineTo(i * 10, jitterData[i]);
-      }
-      ctx.stroke();
+            // Remove old data if more than 10 points
+            if (testData.labels.length > 10) {
+                testData.labels.shift();
+                testData.latency.shift();
+                testData.packetLoss.shift();
+                testData.jitter.shift();
+            }
 
-      // Remove oldest data if exceeding canvas width
-      if (latencyData.length > canvas.width / 10) {
-        latencyData.shift();
-        packetLossData.shift();
-        jitterData.shift();
-      }
-
-      // Request next animation frame
-      requestAnimationFrame(updateChart);
-    }
-
-    // Start updating chart
-    updateChart();
-  </script>
+            // Update chart
+            myChart.data.labels = testData.labels;
+            myChart.data.datasets[0].data = testData.latency;
+            myChart.data.datasets[1].data = testData.packetLoss;
+            myChart.data.datasets[2].data = testData.jitter;
+            myChart.update();
+        }
+    </script>
 </body>
 </html>
