@@ -87,27 +87,38 @@
         }
 
         function updateChartData(latency, packetLoss, jitter) {
-            let timeNow = new Date().toLocaleTimeString();
-            testData.labels.push(timeNow);
-            testData.latency.push(latency);
-            testData.packetLoss.push(packetLoss);
-            testData.jitter.push(jitter);
+    let timeNow = new Date().toLocaleTimeString();
+    testData.labels.push(timeNow);
+    testData.latency.push(latency);
+    testData.packetLoss.push(packetLoss);
+    testData.jitter.push(jitter);
 
-            // Remove old data if more than 10 points
-            if (testData.labels.length > 10) {
-                testData.labels.shift();
-                testData.latency.shift();
-                testData.packetLoss.shift();
-                testData.jitter.shift();
-            }
+    // Remove old data if more than 10 points
+    if (testData.labels.length > 10) {
+        testData.labels.shift();
+        testData.latency.shift();
+        testData.packetLoss.shift();
+        testData.jitter.shift();
+    }
 
-            // Update chart
-            myChart.data.labels = testData.labels;
-            myChart.data.datasets[0].data = testData.latency;
-            myChart.data.datasets[1].data = testData.packetLoss;
-            myChart.data.datasets[2].data = testData.jitter;
-            myChart.update();
+    // Update chart
+    myChart.data.labels = testData.labels;
+    myChart.data.datasets[0].data = testData.latency;
+    myChart.data.datasets[1].data = testData.packetLoss;
+    myChart.data.datasets[2].data = testData.jitter;
+
+    // Check for packet loss and add red mark if detected
+    if (packetLoss > 0) {
+        let lossIndex = testData.packetLoss.findIndex(loss => loss > 0);
+        if (lossIndex !== -1) {
+            let datasetIndex = 1; // Index of packet loss dataset
+            myChart.data.datasets[datasetIndex].pointBackgroundColor[lossIndex] = 'red';
         }
+    }
+
+    myChart.update();
+}
+
     </script>
 </body>
 </html>
