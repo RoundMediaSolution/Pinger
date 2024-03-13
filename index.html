@@ -67,6 +67,10 @@
             urlInput.value = '';
         });
 
+        setInterval(() => {
+            pingData.labels.forEach(url => pingWebsite(url));
+        }, 5000);
+
         async function pingWebsite(url) {
             let startTime = new Date().getTime();
             try {
