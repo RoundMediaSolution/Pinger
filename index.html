@@ -21,15 +21,38 @@
         #testChart {
             margin-top: 20px;
         }
+
+        #targetInput, #intervalSelect {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 300px;
+        }
+
+        #pingButton {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div id="testContainer">
         <h1>Continuous Network Testing</h1>
+        <input type="text" id="targetInput" placeholder="Enter target website URL (e.g., www.example.com)">
+        <select id="intervalSelect">
+            <option value="500">0.5 Second</option>
+            <option value="2500">2.5 Seconds</option>
+            <option value="5000" selected>5 Seconds</option>
+            <option value="10000">10 Seconds</option>
+            <option value="15000">15 Seconds</option>
+            <option value="20000">20 Seconds</option>
+            <option value="30000">30 Seconds</option>
+            <option value="60000">60 Seconds</option>
+        </select>
+        <button id="pingButton">Start Auto-Ping</button>
         <div>
-            <label for="websiteInput">Enter Website URL:</label>
-            <input type="text" id="websiteInput" placeholder="https://example.com">
-            <button onclick="startTesting()">Start Testing</button>
             <canvas id="testChart"></canvas>
         </div>
     </div>
@@ -47,7 +70,11 @@
         let chartOptions = {
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Latency (ms)'
+                    }
                 }
             }
         };
@@ -79,46 +106,58 @@
             options: chartOptions
         });
 
-        function startTesting() {
-            let websiteURL = document.getElementById('websiteInput').value;
-            console.log('Testing website:', websiteURL);
+        let intervalId = null;
 
-            // TODO: Perform network testing and update chart
+        document.getElementById('pingButton').addEventListener('click', () => {
+            let targetWebsite = document.getElementById('targetInput').value;
+            let intervalValue = document.getElementById('intervalSelect').value;
+            if (intervalId) {
+                clearInterval(intervalId);
+                document.getElementById('pingButton').textContent = 'Start Auto-Ping';
+            } else {
+                intervalId = setInterval(() => {
+                    pingWebsite(targetWebsite);
+                }, intervalValue); // Ping at selected interval
+                document.getElementById('pingButton').textContent = 'Stop Auto-Ping';
+            }
+        });
+
+        function pingWebsite(website) {
+            fetch(website, { method: 'HEAD', mode: 'no-cors' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    let latency = response.headers.get('X-Response-Time');
+                    updateChartData(latency, 0, 0); // Assuming no packet loss or jitter
+                })
+                .catch(error => {
+                    updateChartData(-1, 100, 0); // Assuming 100% packet loss
+                });
         }
 
         function updateChartData(latency, packetLoss, jitter) {
-    let timeNow = new Date().toLocaleTimeString();
-    testData.labels.push(timeNow);
-    testData.latency.push(latency);
-    testData.packetLoss.push(packetLoss);
-    testData.jitter.push(jitter);
+            let timeNow = new Date().toLocaleTimeString();
+            testData.labels.push(timeNow);
+            testData.latency.push(latency);
+            testData.packetLoss.push(packetLoss);
+            testData.jitter.push(jitter);
 
-    // Remove old data if more than 10 points
-    if (testData.labels.length > 10) {
-        testData.labels.shift();
-        testData.latency.shift();
-        testData.packetLoss.shift();
-        testData.jitter.shift();
-    }
+            // Remove old data if more than 10 points
+            if (testData.labels.length > 10) {
+                testData.labels.shift();
+                testData.latency.shift();
+                testData.packetLoss.shift();
+                testData.jitter.shift();
+            }
 
-    // Update chart
-    myChart.data.labels = testData.labels;
-    myChart.data.datasets[0].data = testData.latency;
-    myChart.data.datasets[1].data = testData.packetLoss;
-    myChart.data.datasets[2].data = testData.jitter;
-
-    // Check for packet loss and add red mark if detected
-    if (packetLoss > 0) {
-        let lossIndex = testData.packetLoss.findIndex(loss => loss > 0);
-        if (lossIndex !== -1) {
-            let datasetIndex = 1; // Index of packet loss dataset
-            myChart.data.datasets[datasetIndex].pointBackgroundColor[lossIndex] = 'red';
+            // Update chart
+            myChart.data.labels = testData.labels;
+            myChart.data.datasets[0].data = testData.latency;
+            myChart.data.datasets[1].data = testData.packetLoss;
+            myChart.data.datasets[2].data = testData.jitter;
+            myChart.update();
         }
-    }
-
-    myChart.update();
-}
-
     </script>
 </body>
 </html>
