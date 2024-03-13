@@ -1,108 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Website Ping App</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        #pingContainer {
-            text-align: center;
-            max-width: 600px;
-        }
-
-        #pingChart {
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Monitoring</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      border: 1px solid black;
+    }
+  </style>
 </head>
 <body>
-    <div id="pingContainer">
-        <h1>Website Ping App</h1>
-        <form id="pingForm">
-            <label for="urlInput">Enter Website URLs (separated by commas):</label>
-            <input type="text" id="urlInput" required>
-            <button type="submit">Ping</button>
-        </form>
-        <div>
-            <canvas id="pingChart"></canvas>
-        </div>
-    </div>
+  <canvas id="networkChart" width="800" height="400"></canvas>
 
-    <script>
-        const pingForm = document.getElementById('pingForm');
-        const urlInput = document.getElementById('urlInput');
-        const pingChart = document.getElementById('pingChart').getContext('2d');
+  <script>
+    const canvas = document.getElementById('networkChart');
+    const ctx = canvas.getContext('2d');
 
-        let pingData = {
-            labels: [],
-            datasets: []
-        };
+    // Initialize variables for network metrics
+    let latencyData = [];
+    let packetLossData = [];
+    let jitterData = [];
 
-        let chartOptions = {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        };
+    // Function to generate random data for demonstration
+    function generateRandomData() {
+      return Math.random() * 100; // Replace with actual network test results
+    }
 
-        let myChart = new Chart(pingChart, {
-            type: 'line',
-            data: pingData,
-            options: chartOptions
-        });
+    // Function to update chart with new data
+    function updateChart() {
+      // Add new data to arrays
+      latencyData.push(generateRandomData());
+      packetLossData.push(generateRandomData());
+      jitterData.push(generateRandomData());
 
-        pingForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            let urls = urlInput.value.trim().split(',');
-            urls.forEach(url => pingWebsite(url.trim()));
-            urlInput.value = '';
-        });
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        setInterval(() => {
-            pingData.labels.forEach(url => pingWebsite(url));
-        }, 5000);
+      // Plot latency
+      ctx.strokeStyle = 'blue';
+      ctx.beginPath();
+      ctx.moveTo(0, latencyData[0]);
+      for (let i = 1; i < latencyData.length; i++) {
+        ctx.lineTo(i * 10, latencyData[i]);
+      }
+      ctx.stroke();
 
-        async function pingWebsite(url) {
-            let startTime = new Date().getTime();
-            try {
-                let response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-                let endTime = new Date().getTime();
-                let responseTime = endTime - startTime;
-                addDataToChart(url, responseTime);
-            } catch (error) {
-                console.error('Error pinging website:', error);
-                addDataToChart(url, 'Timeout');
-            }
-        }
+      // Plot packet loss
+      ctx.strokeStyle = 'red';
+      ctx.beginPath();
+      ctx.moveTo(0, packetLossData[0]);
+      for (let i = 1; i < packetLossData.length; i++) {
+        ctx.lineTo(i * 10, packetLossData[i]);
+      }
+      ctx.stroke();
 
-        function addDataToChart(label, value) {
-            if (!pingData.labels.includes(label)) {
-                pingData.labels.push(label);
-                pingData.datasets.push({
-                    label: label,
-                    backgroundColor: getRandomColor(),
-                    borderColor: getRandomColor(),
-                    borderWidth: 1,
-                    data: []
-                });
-            }
-            let datasetIndex = pingData.labels.indexOf(label);
-            pingData.datasets[datasetIndex].data.push(value);
-            myChart.update();
-        }
+      // Plot jitter
+      ctx.strokeStyle = 'green';
+      ctx.beginPath();
+      ctx.moveTo(0, jitterData[0]);
+      for (let i = 1; i < jitterData.length; i++) {
+        ctx.lineTo(i * 10, jitterData[i]);
+      }
+      ctx.stroke();
 
-        function getRandomColor() {
-            return '#' + Math.floor(Math.random() * 16777215).toString(16);
-        }
-    </script>
+      // Remove oldest data if exceeding canvas width
+      if (latencyData.length > canvas.width / 10) {
+        latencyData.shift();
+        packetLossData.shift();
+        jitterData.shift();
+      }
+
+      // Request next animation frame
+      requestAnimationFrame(updateChart);
+    }
+
+    // Start updating chart
+    updateChart();
+  </script>
 </body>
 </html>
